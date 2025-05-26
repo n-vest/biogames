@@ -6,47 +6,51 @@
     <script src="https://unpkg.com/@jspsych/plugin-html-keyboard-response@1.1.3"></script>
     <script src="https://unpkg.com/@jspsych/plugin-image-keyboard-response@1.1.3"></script>
     <script src="https://unpkg.com/@jspsych/plugin-preload@1.1.3"></script>
+    <script src="https://unpkg.com/@jspsych-contrib/plugin-pipe"></script>
     <link href="https://unpkg.com/jspsych@7.3.4/css/jspsych.css" rel="stylesheet" type="text/css" />
+    <style>
+      .centered-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        text-align: center;
+        flex-direction: column;
+        font-size: 20px;
+      }
+    </style>
   </head>
   <body></body>
   <script>
-    /* initialize jsPsych */
-    var jsPsych = initJsPsych({
-      on_finish: function() {
-        jsPsych.data.displayData();
-      }
-    });
+    var jsPsych = initJsPsych();
 
-    /* create timeline */
     var timeline = [];
 
-    /* preload images */
     var preload = {
       type: jsPsychPreload,
       images: ['img/egg.png', 'img/larva.png', 'img/pupa.png', 'img/adult.png']
     };
     timeline.push(preload);
 
-    /* welcome screen */
     var welcome = {
       type: jsPsychHtmlKeyboardResponse,
-      stimulus: "Welcome to the experiment. Press any key to begin."
+      stimulus: '<div class="centered-container">Welcome to the experiment. Press any key to begin.</div>'
     };
     timeline.push(welcome);
 
-    /* instructions */
     var instructions = {
       type: jsPsychHtmlKeyboardResponse,
-      stimulus: `<p>On each trial, you will see two images showing different life stages of an insect.</p>
-<p>Your task is to choose the image that shows the life stage that comes later in the life cycle.</p>
-<p>Press the <strong>F</strong> key if the correct image is on the <strong>left</strong>.</p>
-<p>Press the <strong>J</strong> key if the correct image is on the <strong>right</strong>.</p>
-<p>Press any key to begin.</p>`,
-      post_trial_gap: 1000
+      stimulus: `
+        <div class="centered-container">
+          <p>On each trial, you will see two images showing different life stages of an insect.</p>
+          <p>Your task is to choose the image that shows the life stage that comes <strong>later</strong> in the life cycle.</p>
+          <p>Press the <strong>F</strong> key if the correct image is on the <strong>left</strong>.</p>
+          <p>Press the <strong>J</strong> key if the correct image is on the <strong>right</strong>.</p>
+          <p>Press any key to begin.</p>
+        </div>`
     };
     timeline.push(instructions);
 
-    /* define all ordered stimulus pairs */
     var stages = ["egg", "larva", "pupa", "adult"];
     var imagePaths = {
       egg: "img/egg.png",
@@ -55,56 +59,51 @@
       adult: "img/adult.png"
     };
 
-var test_stimuli = [];
+    var test_stimuli = [];
+    var base_pairs = [];
 
-// Generate all 12 ordered pairs
-var base_pairs = [];
-for (var i = 0; i < stages.length; i++) {
-  for (var j = 0; j < stages.length; j++) {
-    if (i !== j) {
-      base_pairs.push({
-        left: imagePaths[stages[i]],
-        right: imagePaths[stages[j]]
-      });
+    for (var i = 0; i < stages.length; i++) {
+      for (var j = 0; j < stages.length; j++) {
+        if (i !== j) {
+          base_pairs.push({
+            left: imagePaths[stages[i]],
+            right: imagePaths[stages[j]]
+          });
+        }
+      }
     }
-  }
-}
 
-// Repeat 3 times for 36 total trials
-for (var rep = 0; rep < 3; rep++) {
-  test_stimuli = test_stimuli.concat(jsPsych.randomization.shuffle(base_pairs));
-}
+    for (var rep = 0; rep < 3; rep++) {
+      test_stimuli = test_stimuli.concat(jsPsych.randomization.shuffle(base_pairs));
+    }
 
-    /* fixation trial */
     var fixation = {
       type: jsPsychHtmlKeyboardResponse,
-      stimulus: '<div style="font-size:60px;">+</div>',
+      stimulus: '<div class="centered-container" style="font-size: 60px;">+</div>',
       choices: "NO_KEYS",
       trial_duration: 1000,
-      data: {
-          task: 'fixation'
-        }
+      data: { task: 'fixation' }
     };
 
-    /* image pair test trial */
- var test = {
-  type: jsPsychHtmlKeyboardResponse,
-  stimulus: function() {
-    return `
-      <div style="display: flex; justify-content: center; gap: 300px; align-items: center;">
-        <img src="${jsPsych.timelineVariable('left')}" style="max-height: 300px; max-width: 200px; height: auto; width: auto;">
-        <img src="${jsPsych.timelineVariable('right')}" style="max-height: 300px; max-width: 200px; height: auto; width: auto;">
-      </div>
-    `;
-  },
-  choices: ['f', 'j'],
-  data: {
-    left_image: jsPsych.timelineVariable('left'),
-    right_image: jsPsych.timelineVariable('right')
-  }
-};
+    var test = {
+      type: jsPsychHtmlKeyboardResponse,
+      stimulus: function () {
+        const left = jsPsych.timelineVariable('left');
+        const right = jsPsych.timelineVariable('right');
+        return `
+          <div class="centered-container" style="flex-direction: row; gap: 275px;">
+            <img src="${left}" style="max-height: 300px; max-width: 200px;">
+            <img src="${right}" style="max-height: 300px; max-width: 200px;">
+          </div>
+        `;
+      },
+      choices: ['f', 'j'],
+      data: {
+        left_image: jsPsych.timelineVariable('left'),
+        right_image: jsPsych.timelineVariable('right')
+      }
+    };
 
-    /* define the test procedure */
     var test_procedure = {
       timeline: [fixation, test],
       timeline_variables: test_stimuli,
@@ -112,18 +111,33 @@ for (var rep = 0; rep < 3; rep++) {
     };
     timeline.push(test_procedure);
 
+    // Save data
+    const subject_id = jsPsych.randomization.randomID(10);
+    const filename = `${subject_id}.csv`;
 
-// Save data to a CSV file
-var save_data = {
-  type: jsPsychHtmlKeyboardResponse,
-  stimulus: "Thank you for participating. Press any key to finish and download your data.",
-  on_finish: function() {
-    jsPsych.data.get().localSave('csv', 'experiment_data.csv');
-  }
-};
-timeline.push(save_data);
+    const save_data = {
+      type: jsPsychPipe,
+      action: "save",
+      experiment_id: "J1JQIXI5tplE",
+      filename: filename,
+      data_string: () => jsPsych.data.get().csv()
+    };
+    timeline.push(save_data);
 
-    /* start the experiment */
+    // Final slide with return instructions
+    const thank_you = {
+      type: jsPsychHtmlKeyboardResponse,
+      stimulus: `
+        <div class="centered-container">
+          <p>Thank you for participating!</p>
+          <p>Your responses have been recorded.</p>
+          <p>Please return to the Qualtrics survey to finish the study.</p>
+          <p>You may now close this tab.</p>
+          <p><em>Press any key to finish.</em></p>
+        </div>`
+    };
+    timeline.push(thank_you);
+
     jsPsych.run(timeline);
   </script>
 </html>
