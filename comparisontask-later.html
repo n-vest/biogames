@@ -59,11 +59,9 @@
     timeline.push(welcome);
 
     /* instructions */
-    //Group A
-    var instructions_group_A = [
-  {
-    type: jsPsychHtmlKeyboardResponse,
-    stimulus: `<div class="centered-content">
+    var instructions = {
+      type: jsPsychHtmlKeyboardResponse,
+      stimulus: `<div class="centered-content">
         <p>On each trial, you will see two images showing different life stages of an insect.</p>
         <p>Your task is to choose the image that shows the life stage that comes <strong>later</strong> in the life cycle.</p>
         <p>Press the <strong>F</strong> key if the correct image is on the <strong>left</strong>.</p>
@@ -71,34 +69,8 @@
         <p>Press any key to begin.</p>
       </div>`,
       post_trial_gap: 1000
-  }
-];
-
-
-//Group B
-var instructions_group_B = [
-  {
-    type: jsPsychHtmlKeyboardResponse,
-    stimulus: `<div class="centered-content">
-        <p>On each trial, you will see two images showing different life stages of an insect.</p>
-        <p>Your task is to choose the image that shows the life stage that comes <strong>earlier</strong> in the life cycle.</p>
-        <p>Press the <strong>F</strong> key if the correct image is on the <strong>left</strong>.</p>
-        <p>Press the <strong>J</strong> key if the correct image is on the <strong>right</strong>.</p>
-        <p>Press any key to begin.</p>
-      </div>`,
-      post_trial_gap: 1000
-  }
-];
-
-
-// Randomly assign participant to Group A or B
-var assigned_instructions = Math.random() < 0.5 ? instructions_group_A : instructions_group_B;
-
-
-
-var timeline = [];
-timeline.push(...assigned_instructions);
-
+    };
+    timeline.push(instructions);
 
     /* define all ordered stimulus pairs */
     var stages = ["egg", "larva", "pupa", "adult"];
